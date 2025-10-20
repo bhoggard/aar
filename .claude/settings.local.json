@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Edit(**)",
+      "MultiEdit(**)",
+      "Write(**)",
+      "Grep(**)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss init:*)",
+      "Glob(**)",
+      "LS(**)",
+      "WebSearch(claude ai)",
+      "Bash(git add:*)",
+      "Bash(git mv:*)",
+      "Bash(git stash:*)",
+      "Bash(git diff:*)",
+      "Bash(git commit:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(pwd:*)",
+      "Bash(which:*)",
+      "mcp__ide__getDiagnostics",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_close",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_click",
+      "Bash(go mod init github.com/bhoggard/aar)",
+      "Bash(go get github.com/chromedp/chromedp)",
+      "Bash(go get github.com/joho/godotenv)",
+      "Bash(go build -o email-screenshot-generator)",
+      "Bash(./email-screenshot-generator -h)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

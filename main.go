@@ -119,7 +119,7 @@ func main() {
 		fmt.Printf("  ✓ Screenshot generated: %s\n", screenshotPath)
 
 		// Move email to archive folder
-		if err := client.MoveEmail(emailID, archiveMailbox.ID); err != nil {
+		if err := client.MoveEmail(emailID, sourceMailbox.ID, archiveMailbox.ID); err != nil {
 			log.Printf("  ✗ Failed to move email to archive: %v", err)
 			failedCount++
 			continue

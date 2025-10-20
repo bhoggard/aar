@@ -31,7 +31,8 @@
       "Bash(go get github.com/chromedp/chromedp)",
       "Bash(go get github.com/joho/godotenv)",
       "Bash(go build -o email-screenshot-generator)",
-      "Bash(./email-screenshot-generator -h)"
+      "Bash(./email-screenshot-generator -h)",
+      "Bash(source ~/.secrets)"
     ],
     "deny": [],
     "ask": []

@@ -56,11 +56,12 @@ type Mailbox struct {
 
 // Email represents a JMAP email
 type Email struct {
-	ID       string          `json:"id"`
-	Subject  string          `json:"subject"`
-	From     []EmailAddress  `json:"from"`
-	HTMLBody []HTMLBodyPart  `json:"htmlBody"`
-	BodyValues map[string]BodyValue `json:"bodyValues"`
+	ID         string                 `json:"id"`
+	Subject    string                 `json:"subject"`
+	From       []EmailAddress         `json:"from"`
+	HTMLBody   []HTMLBodyPart         `json:"htmlBody"`
+	BodyValues map[string]BodyValue   `json:"bodyValues"`
+	MailboxIds map[string]bool        `json:"mailboxIds"`
 }
 
 // EmailAddress represents an email address
@@ -304,6 +305,7 @@ func (c *JMAPClient) GetEmails(emailIDs []string) ([]Email, error) {
 					"from",
 					"htmlBody",
 					"bodyValues",
+					"mailboxIds",
 				},
 				"fetchHTMLBodyValues": true,
 			},
@@ -346,7 +348,7 @@ func (c *JMAPClient) GetEmails(emailIDs []string) ([]Email, error) {
 }
 
 // MoveEmail moves an email to a different mailbox
-func (c *JMAPClient) MoveEmail(emailID, targetMailboxID string) error {
+func (c *JMAPClient) MoveEmail(emailID, sourceMailboxID, targetMailboxID string) error {
 	methodCalls := []interface{}{
 		[]interface{}{
 			"Email/set",
@@ -354,9 +356,8 @@ func (c *JMAPClient) MoveEmail(emailID, targetMailboxID string) error {
 				"accountId": c.accountID,
 				"update": map[string]interface{}{
 					emailID: map[string]interface{}{
-						"mailboxIds": map[string]bool{
-							targetMailboxID: true,
-						},
+						"mailboxIds/" + sourceMailboxID: nil,
+						"mailboxIds/" + targetMailboxID: true,
 					},
 				},
 			},
@@ -381,14 +382,32 @@ func (c *JMAPClient) MoveEmail(emailID, targetMailboxID string) error {
 		return fmt.Errorf("unexpected response format")
 	}
 
-	// Check for errors in the response
+	// Check if the response is an error
+	if len(response.MethodResponses[0]) > 0 {
+		if methodName, ok := response.MethodResponses[0][0].(string); ok && methodName == "error" {
+			errorData, _ := json.Marshal(response.MethodResponses[0][1])
+			var errorResp struct {
+				Type        string `json:"type"`
+				Description string `json:"description"`
+			}
+			if err := json.Unmarshal(errorData, &errorResp); err == nil {
+				if errorResp.Type == "accountReadOnly" {
+					return fmt.Errorf("API key has read-only permissions. Please create a new Fastmail API token with read-write permissions for Mail")
+				}
+				return fmt.Errorf("JMAP error (%s): %s", errorResp.Type, errorResp.Description)
+			}
+			return fmt.Errorf("JMAP error: %s", string(errorData))
+		}
+	}
+
+	// Parse successful response
 	setResponseData, err := json.Marshal(response.MethodResponses[0][1])
 	if err != nil {
 		return err
 	}
 
 	var setResponse struct {
-		Updated   map[string]interface{} `json:"updated"`
+		Updated    map[string]interface{} `json:"updated"`
 		NotUpdated map[string]interface{} `json:"notUpdated"`
 	}
 
@@ -396,8 +415,9 @@ func (c *JMAPClient) MoveEmail(emailID, targetMailboxID string) error {
 		return fmt.Errorf("failed to decode set response: %w", err)
 	}
 
-	if _, ok := setResponse.NotUpdated[emailID]; ok {
-		return fmt.Errorf("failed to move email %s", emailID)
+	if notUpdated, ok := setResponse.NotUpdated[emailID]; ok {
+		errData, _ := json.Marshal(notUpdated)
+		return fmt.Errorf("failed to move email: %s", string(errData))
 	}
 
 	return nil

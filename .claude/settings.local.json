@@ -32,7 +32,8 @@
       "Bash(go get github.com/joho/godotenv)",
       "Bash(go build -o email-screenshot-generator)",
       "Bash(./email-screenshot-generator -h)",
-      "Bash(source ~/.secrets)"
+      "Bash(source ~/.secrets)",
+      "Bash(go test -v)"
     ],
     "deny": [],
     "ask": []

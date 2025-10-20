@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 )
@@ -19,6 +20,13 @@ var (
 	limit  = flag.Int("limit", 0, "Maximum emails to process (default: 0 = all)")
 	dryRun = flag.Bool("dry-run", false, "Preview operations without making changes")
 )
+
+// ProcessResult contains the results of processing emails
+type ProcessResult struct {
+	TotalCount     int
+	ProcessedCount int
+	FailedCount    int
+}
 
 func main() {
 	flag.Parse()
@@ -38,41 +46,6 @@ func main() {
 	}
 	fmt.Println("✓ Connected to JMAP server")
 
-	// Find source mailbox
-	sourceMailbox, err := client.FindMailboxByName(sourceFolder)
-	if err != nil {
-		log.Fatalf("Failed to find source folder '%s': %v", sourceFolder, err)
-	}
-
-	// Find archive mailbox
-	archiveMailbox, err := client.FindMailboxByName(archiveFolder)
-	if err != nil {
-		log.Fatalf("Failed to find archive folder '%s': %v", archiveFolder, err)
-	}
-
-	// Get emails from source folder
-	emailIDs, err := client.GetEmailsInMailbox(sourceMailbox.ID, *limit)
-	if err != nil {
-		log.Fatalf("Failed to retrieve emails: %v", err)
-	}
-
-	emailCount := len(emailIDs)
-	if emailCount == 0 {
-		fmt.Printf("No emails found in folder '%s'\n", sourceFolder)
-		return
-	}
-
-	fmt.Printf("Found %d email(s) in folder '%s'\n", emailCount, sourceFolder)
-
-	if *dryRun {
-		fmt.Println("\nDRY RUN MODE - No changes will be made")
-		fmt.Printf("Would process %d emails:\n", emailCount)
-		for i, id := range emailIDs {
-			fmt.Printf("  %d. Email ID: %s\n", i+1, id)
-		}
-		return
-	}
-
 	// Create screenshot generator
 	generator, err := NewScreenshotGenerator(screenshotDir, screenshotWidth, screenshotHeight)
 	if err != nil {
@@ -80,31 +53,81 @@ func main() {
 	}
 
 	// Process emails
+	result, err := processEmails(client, generator, *limit, *dryRun, os.Stdout)
+	if err != nil {
+		log.Fatalf("Failed to process emails: %v", err)
+	}
+
+	// Print summary
+	fmt.Printf("\n=== Summary ===\n")
+	fmt.Printf("Total emails: %d\n", result.TotalCount)
+	fmt.Printf("Successfully processed: %d\n", result.ProcessedCount)
+	fmt.Printf("Failed: %d\n", result.FailedCount)
+}
+
+// processEmails processes emails from source to archive folder
+func processEmails(client EmailClient, generator ScreenshotService, limit int, dryRun bool, output io.Writer) (*ProcessResult, error) {
+	// Find source mailbox
+	sourceMailbox, err := client.FindMailboxByName(sourceFolder)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find source folder '%s': %w", sourceFolder, err)
+	}
+
+	// Find archive mailbox
+	archiveMailbox, err := client.FindMailboxByName(archiveFolder)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find archive folder '%s': %w", archiveFolder, err)
+	}
+
+	// Get emails from source folder
+	emailIDs, err := client.GetEmailsInMailbox(sourceMailbox.ID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve emails: %w", err)
+	}
+
+	emailCount := len(emailIDs)
+	if emailCount == 0 {
+		fmt.Fprintf(output, "No emails found in folder '%s'\n", sourceFolder)
+		return &ProcessResult{TotalCount: 0, ProcessedCount: 0, FailedCount: 0}, nil
+	}
+
+	fmt.Fprintf(output, "Found %d email(s) in folder '%s'\n", emailCount, sourceFolder)
+
+	if dryRun {
+		fmt.Fprintln(output, "\nDRY RUN MODE - No changes will be made")
+		fmt.Fprintf(output, "Would process %d emails:\n", emailCount)
+		for i, id := range emailIDs {
+			fmt.Fprintf(output, "  %d. Email ID: %s\n", i+1, id)
+		}
+		return &ProcessResult{TotalCount: emailCount, ProcessedCount: 0, FailedCount: 0}, nil
+	}
+
+	// Process emails
 	var processedCount, failedCount int
 	for i, emailID := range emailIDs {
-		fmt.Printf("\nProcessing email %d/%d (ID: %s)...\n", i+1, emailCount, emailID)
+		fmt.Fprintf(output, "\nProcessing email %d/%d (ID: %s)...\n", i+1, emailCount, emailID)
 
 		// Get email details
 		emails, err := client.GetEmails([]string{emailID})
 		if err != nil {
-			log.Printf("  ✗ Failed to fetch email: %v", err)
+			fmt.Fprintf(output, "  ✗ Failed to fetch email: %v\n", err)
 			failedCount++
 			continue
 		}
 
 		if len(emails) == 0 {
-			log.Printf("  ✗ Email not found")
+			fmt.Fprintln(output, "  ✗ Email not found")
 			failedCount++
 			continue
 		}
 
 		email := emails[0]
-		fmt.Printf("  Subject: %s\n", email.Subject)
+		fmt.Fprintf(output, "  Subject: %s\n", email.Subject)
 
 		// Extract HTML content
 		htmlContent := extractHTMLContent(email)
 		if htmlContent == "" {
-			log.Printf("  ✗ No HTML content found")
+			fmt.Fprintln(output, "  ✗ No HTML content found")
 			failedCount++
 			continue
 		}
@@ -112,28 +135,28 @@ func main() {
 		// Generate screenshot
 		screenshotPath, err := generator.GenerateScreenshot(emailID, htmlContent)
 		if err != nil {
-			log.Printf("  ✗ Failed to generate screenshot: %v", err)
+			fmt.Fprintf(output, "  ✗ Failed to generate screenshot: %v\n", err)
 			failedCount++
 			continue
 		}
-		fmt.Printf("  ✓ Screenshot generated: %s\n", screenshotPath)
+		fmt.Fprintf(output, "  ✓ Screenshot generated: %s\n", screenshotPath)
 
 		// Move email to archive folder
 		if err := client.MoveEmail(emailID, sourceMailbox.ID, archiveMailbox.ID); err != nil {
-			log.Printf("  ✗ Failed to move email to archive: %v", err)
+			fmt.Fprintf(output, "  ✗ Failed to move email to archive: %v\n", err)
 			failedCount++
 			continue
 		}
-		fmt.Printf("  ✓ Moved to archive folder\n")
+		fmt.Fprintln(output, "  ✓ Moved to archive folder")
 
 		processedCount++
 	}
 
-	// Print summary
-	fmt.Printf("\n" + "=== Summary ===\n")
-	fmt.Printf("Total emails: %d\n", emailCount)
-	fmt.Printf("Successfully processed: %d\n", processedCount)
-	fmt.Printf("Failed: %d\n", failedCount)
+	return &ProcessResult{
+		TotalCount:     emailCount,
+		ProcessedCount: processedCount,
+		FailedCount:    failedCount,
+	}, nil
 }
 
 // extractHTMLContent extracts HTML content from an email

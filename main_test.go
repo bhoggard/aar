@@ -70,12 +70,12 @@ func NewMockScreenshotService() *MockScreenshotService {
 	}
 }
 
-func (m *MockScreenshotService) GenerateScreenshot(emailID, htmlContent string) (string, error) {
+func (m *MockScreenshotService) GenerateScreenshot(timestamp, htmlContent string) (string, error) {
 	if m.generateError != nil {
 		return "", m.generateError
 	}
-	path := "screenshots/email_" + emailID + ".png"
-	m.generatedScreenshots[emailID] = path
+	path := "screenshots/" + timestamp + ".png"
+	m.generatedScreenshots[timestamp] = path
 	return path, nil
 }
 
@@ -89,17 +89,19 @@ func TestProcessEmails_Success(t *testing.T) {
 	client.mailboxes[archiveFolder] = &Mailbox{ID: "arch-456", Name: archiveFolder}
 	client.emails["src-123"] = []string{"email1", "email2"}
 	client.emailDetails["email1"] = Email{
-		ID:      "email1",
-		Subject: "Test Email 1",
-		HTMLBody: []HTMLBodyPart{{PartID: "part1", Type: "text/html"}},
+		ID:         "email1",
+		Subject:    "Test Email 1",
+		ReceivedAt: "2025-10-24T14:30:00Z",
+		HTMLBody:   []HTMLBodyPart{{PartID: "part1", Type: "text/html"}},
 		BodyValues: map[string]BodyValue{
 			"part1": {Value: "<html><body>Test content</body></html>"},
 		},
 	}
 	client.emailDetails["email2"] = Email{
-		ID:      "email2",
-		Subject: "Test Email 2",
-		HTMLBody: []HTMLBodyPart{{PartID: "part1", Type: "text/html"}},
+		ID:         "email2",
+		Subject:    "Test Email 2",
+		ReceivedAt: "2025-10-24T14:35:00Z",
+		HTMLBody:   []HTMLBodyPart{{PartID: "part1", Type: "text/html"}},
 		BodyValues: map[string]BodyValue{
 			"part1": {Value: "<html><body>Test content 2</body></html>"},
 		},
@@ -237,9 +239,10 @@ func TestProcessEmails_ScreenshotError(t *testing.T) {
 	client.mailboxes[archiveFolder] = &Mailbox{ID: "arch-456", Name: archiveFolder}
 	client.emails["src-123"] = []string{"email1"}
 	client.emailDetails["email1"] = Email{
-		ID:      "email1",
-		Subject: "Test Email",
-		HTMLBody: []HTMLBodyPart{{PartID: "part1", Type: "text/html"}},
+		ID:         "email1",
+		Subject:    "Test Email",
+		ReceivedAt: "2025-10-24T14:30:00Z",
+		HTMLBody:   []HTMLBodyPart{{PartID: "part1", Type: "text/html"}},
 		BodyValues: map[string]BodyValue{
 			"part1": {Value: "<html><body>Test</body></html>"},
 		},
@@ -271,9 +274,10 @@ func TestProcessEmails_MoveEmailError(t *testing.T) {
 	client.mailboxes[archiveFolder] = &Mailbox{ID: "arch-456", Name: archiveFolder}
 	client.emails["src-123"] = []string{"email1"}
 	client.emailDetails["email1"] = Email{
-		ID:      "email1",
-		Subject: "Test Email",
-		HTMLBody: []HTMLBodyPart{{PartID: "part1", Type: "text/html"}},
+		ID:         "email1",
+		Subject:    "Test Email",
+		ReceivedAt: "2025-10-24T14:30:00Z",
+		HTMLBody:   []HTMLBodyPart{{PartID: "part1", Type: "text/html"}},
 		BodyValues: map[string]BodyValue{
 			"part1": {Value: "<html><body>Test</body></html>"},
 		},
@@ -305,9 +309,10 @@ func TestProcessEmails_NoHTMLContent(t *testing.T) {
 	client.mailboxes[archiveFolder] = &Mailbox{ID: "arch-456", Name: archiveFolder}
 	client.emails["src-123"] = []string{"email1"}
 	client.emailDetails["email1"] = Email{
-		ID:       "email1",
-		Subject:  "Text Only Email",
-		HTMLBody: []HTMLBodyPart{},
+		ID:         "email1",
+		Subject:    "Text Only Email",
+		ReceivedAt: "2025-10-24T14:30:00Z",
+		HTMLBody:   []HTMLBodyPart{},
 	}
 
 	var output bytes.Buffer
@@ -339,9 +344,10 @@ func TestProcessEmails_WithLimit(t *testing.T) {
 	for i := 1; i <= 3; i++ {
 		id := "email" + string(rune('0'+i))
 		client.emailDetails[id] = Email{
-			ID:      id,
-			Subject: "Test Email " + string(rune('0'+i)),
-			HTMLBody: []HTMLBodyPart{{PartID: "part1", Type: "text/html"}},
+			ID:         id,
+			Subject:    "Test Email " + string(rune('0'+i)),
+			ReceivedAt: "2025-10-24T14:30:00Z",
+			HTMLBody:   []HTMLBodyPart{{PartID: "part1", Type: "text/html"}},
 			BodyValues: map[string]BodyValue{
 				"part1": {Value: "<html><body>Test</body></html>"},
 			},

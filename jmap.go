@@ -14,17 +14,17 @@ const (
 
 // JMAPClient handles JMAP API interactions
 type JMAPClient struct {
-	apiKey      string
-	accountID   string
-	apiURL      string
-	httpClient  *http.Client
+	apiKey     string
+	accountID  string
+	apiURL     string
+	httpClient *http.Client
 }
 
 // SessionResponse represents the JMAP session response
 type SessionResponse struct {
-	Accounts         map[string]Account `json:"accounts"`
-	PrimaryAccounts  map[string]string  `json:"primaryAccounts"`
-	ApiURL           string             `json:"apiUrl"`
+	Accounts        map[string]Account `json:"accounts"`
+	PrimaryAccounts map[string]string  `json:"primaryAccounts"`
+	ApiURL          string             `json:"apiUrl"`
 }
 
 // Account represents a JMAP account
@@ -56,13 +56,13 @@ type Mailbox struct {
 
 // Email represents a JMAP email
 type Email struct {
-	ID         string                 `json:"id"`
-	Subject    string                 `json:"subject"`
-	ReceivedAt string                 `json:"receivedAt"`
-	From       []EmailAddress         `json:"from"`
-	HTMLBody   []HTMLBodyPart         `json:"htmlBody"`
-	BodyValues map[string]BodyValue   `json:"bodyValues"`
-	MailboxIds map[string]bool        `json:"mailboxIds"`
+	ID         string               `json:"id"`
+	Subject    string               `json:"subject"`
+	ReceivedAt string               `json:"receivedAt"`
+	From       []EmailAddress       `json:"from"`
+	HTMLBody   []HTMLBodyPart       `json:"htmlBody"`
+	BodyValues map[string]BodyValue `json:"bodyValues"`
+	MailboxIds map[string]bool      `json:"mailboxIds"`
 }
 
 // EmailAddress represents an email address
@@ -79,8 +79,8 @@ type HTMLBodyPart struct {
 
 // BodyValue represents the body content
 type BodyValue struct {
-	Value    string `json:"value"`
-	IsHTML   bool   `json:"isEncodingProblem"`
+	Value  string `json:"value"`
+	IsHTML bool   `json:"isEncodingProblem"`
 }
 
 // NewJMAPClient creates a new JMAP client

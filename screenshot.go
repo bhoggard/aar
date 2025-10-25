@@ -40,8 +40,8 @@ func (s *ScreenshotGenerator) GenerateScreenshot(timestamp, htmlContent string) 
 		return "", fmt.Errorf("failed to parse timestamp: %w", err)
 	}
 
-	// Format timestamp as yyyy-mm-dd-hh-mm
-	formattedTime := t.Format("2006-01-02-15-04")
+	// Format timestamp as yyyy-mm-dd-hh-mm-ss
+	formattedTime := t.Format("2006-01-02-15-04-05")
 
 	// Create output filename
 	outputPath := filepath.Join(s.outputDir, fmt.Sprintf("%s.png", formattedTime))

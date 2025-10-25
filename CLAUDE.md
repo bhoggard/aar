@@ -51,7 +51,8 @@ A command-line Go application that reads emails from a specified JMAP folder, ge
 
 - Uses headless Chrome (Chromedp) to render HTML content
 - Converts email HTML to PNG screenshots
-- Saves screenshots with email ID as filename
+- Saves screenshots with timestamp and email ID as filename (format: `yyyy-mm-dd-hh-mm-ss-<emailID>.png`)
+- Converts UTC timestamps to New York timezone (America/New_York) for filenames
 
 **Folder Manager**
 
@@ -99,9 +100,10 @@ Test your configuration without modifying emails:
 1. **Mailbox Discovery** → Locate source and archive folders by ID
 1. **Email Retrieval** → Query JMAP for emails in source folder
 1. **Processing Loop**:
-- Fetch email metadata and HTML body
+- Fetch email metadata (including receivedAt timestamp) and HTML body
+- Convert receivedAt timestamp from UTC to New York timezone
 - Generate screenshot via Chromedp
-- Save screenshot to output directory
+- Save screenshot to output directory with timestamp-emailID filename
 - Move email to archive folder
 - Log completion status
 1. **Completion Report** → Display summary of processed emails
@@ -120,16 +122,25 @@ Starting email screenshot generator...
 Connected to JMAP server
 Found source folder: Inbox (5 emails)
 Processing email 1/5...
-  ✓ Screenshot generated: screenshots/email_12345.png
+  ✓ Screenshot generated: screenshots/2025-10-24-14-30-45-email_12345.png
   ✓ Moved to archive folder
 Processing email 2/5...
-  ✓ Screenshot generated: screenshots/email_12346.png
+  ✓ Screenshot generated: screenshots/2025-10-24-14-35-22-email_12346.png
   ✓ Moved to archive folder
 ...
 Completed: 5 emails processed, 0 failed
 ```
 
 ## Development Notes
+
+### Code Formatting
+
+**IMPORTANT: When working on this project, ALWAYS run `go fmt ./...` after making any changes to Go files.**
+
+- Run `go fmt ./...` before running tests
+- Run `go fmt ./...` before committing code
+- All Go code must be properly formatted according to Go standards
+- Use `go test -v` to verify tests pass after formatting
 
 ### Testing Considerations
 

@@ -133,7 +133,7 @@ func processEmails(client EmailClient, generator ScreenshotService, limit int, d
 		}
 
 		// Generate screenshot
-		screenshotPath, err := generator.GenerateScreenshot(emailID, htmlContent)
+		screenshotPath, err := generator.GenerateScreenshot(email.ReceivedAt, emailID, htmlContent)
 		if err != nil {
 			fmt.Fprintf(output, "  ✗ Failed to generate screenshot: %v\n", err)
 			failedCount++

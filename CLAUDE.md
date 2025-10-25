@@ -131,6 +131,15 @@ Completed: 5 emails processed, 0 failed
 
 ## Development Notes
 
+### Code Formatting
+
+**IMPORTANT: When working on this project, ALWAYS run `go fmt ./...` after making any changes to Go files.**
+
+- Run `go fmt ./...` before running tests
+- Run `go fmt ./...` before committing code
+- All Go code must be properly formatted according to Go standards
+- Use `go test -v` to verify tests pass after formatting
+
 ### Testing Considerations
 
 - Mock JMAP server responses for unit testing

@@ -70,12 +70,12 @@ func NewMockScreenshotService() *MockScreenshotService {
 	}
 }
 
-func (m *MockScreenshotService) GenerateScreenshot(timestamp, htmlContent string) (string, error) {
+func (m *MockScreenshotService) GenerateScreenshot(timestamp, emailID, htmlContent string) (string, error) {
 	if m.generateError != nil {
 		return "", m.generateError
 	}
-	path := "screenshots/" + timestamp + ".png"
-	m.generatedScreenshots[timestamp] = path
+	path := "screenshots/" + timestamp + "-" + emailID + ".png"
+	m.generatedScreenshots[emailID] = path
 	return path, nil
 }
 

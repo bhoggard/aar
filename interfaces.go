@@ -10,5 +10,5 @@ type EmailClient interface {
 
 // ScreenshotService defines the interface for screenshot generation
 type ScreenshotService interface {
-	GenerateScreenshot(timestamp, htmlContent string) (string, error)
+	GenerateScreenshot(timestamp, emailID, htmlContent string) (string, error)
 }

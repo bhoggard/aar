@@ -33,18 +33,25 @@ func NewScreenshotGenerator(outputDir string, width, height int) (*ScreenshotGen
 }
 
 // GenerateScreenshot creates a screenshot from HTML content
-func (s *ScreenshotGenerator) GenerateScreenshot(timestamp, htmlContent string) (string, error) {
-	// Parse the timestamp
+func (s *ScreenshotGenerator) GenerateScreenshot(timestamp, emailID, htmlContent string) (string, error) {
+	// Parse the timestamp (in UTC)
 	t, err := time.Parse(time.RFC3339, timestamp)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse timestamp: %w", err)
 	}
 
-	// Format timestamp as yyyy-mm-dd-hh-mm-ss
-	formattedTime := t.Format("2006-01-02-15-04-05")
+	// Convert to New York timezone
+	nyLocation, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		return "", fmt.Errorf("failed to load New York timezone: %w", err)
+	}
+	nyTime := t.In(nyLocation)
 
-	// Create output filename
-	outputPath := filepath.Join(s.outputDir, fmt.Sprintf("%s.png", formattedTime))
+	// Format timestamp as yyyy-mm-dd-hh-mm-ss in New York time
+	formattedTime := nyTime.Format("2006-01-02-15-04-05")
+
+	// Create output filename with timestamp and email ID
+	outputPath := filepath.Join(s.outputDir, fmt.Sprintf("%s-%s.png", formattedTime, emailID))
 
 	// Create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

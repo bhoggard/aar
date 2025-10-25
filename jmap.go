@@ -58,6 +58,7 @@ type Mailbox struct {
 type Email struct {
 	ID         string                 `json:"id"`
 	Subject    string                 `json:"subject"`
+	ReceivedAt string                 `json:"receivedAt"`
 	From       []EmailAddress         `json:"from"`
 	HTMLBody   []HTMLBodyPart         `json:"htmlBody"`
 	BodyValues map[string]BodyValue   `json:"bodyValues"`
@@ -302,6 +303,7 @@ func (c *JMAPClient) GetEmails(emailIDs []string) ([]Email, error) {
 				"properties": []string{
 					"id",
 					"subject",
+					"receivedAt",
 					"from",
 					"htmlBody",
 					"bodyValues",

@@ -33,9 +33,18 @@ func NewScreenshotGenerator(outputDir string, width, height int) (*ScreenshotGen
 }
 
 // GenerateScreenshot creates a screenshot from HTML content
-func (s *ScreenshotGenerator) GenerateScreenshot(emailID, htmlContent string) (string, error) {
+func (s *ScreenshotGenerator) GenerateScreenshot(timestamp, htmlContent string) (string, error) {
+	// Parse the timestamp
+	t, err := time.Parse(time.RFC3339, timestamp)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse timestamp: %w", err)
+	}
+
+	// Format timestamp as yyyy-mm-dd-hh-mm
+	formattedTime := t.Format("2006-01-02-15-04")
+
 	// Create output filename
-	outputPath := filepath.Join(s.outputDir, fmt.Sprintf("email_%s.png", emailID))
+	outputPath := filepath.Join(s.outputDir, fmt.Sprintf("%s.png", formattedTime))
 
 	// Create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
